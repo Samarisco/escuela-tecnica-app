@@ -11,18 +11,18 @@ const Footer = () => {
     <footer className="bg-[#4b1e25] p-8 xl:p-20 text-white">
       {/* Parte superior: logo + redes */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 border-b border-gray-600 pb-8">
-        {/* Logo */}
-        <div className="w-1/6">
+        {/* Logo centrado en móvil */}
+        <div className="flex justify-center md:justify-start w-full md:w-auto">
           <a
             href="#"
-            className="text-2xl font-bold relative p-1 bg-white text-[#4b1e25] rounded-md"
+            className="text-2xl font-bold relative p-1 bg-white text-[#4b1e25] rounded-md px-4"
           >
             INSTITUCIÓN
           </a>
         </div>
 
         {/* Redes sociales */}
-        <nav className="flex items-center gap-4">
+        <nav className="flex items-center gap-4 justify-center md:justify-end w-full md:w-auto">
           <a href="#" className="block p-3 bg-[#7c4367] rounded-full hover:bg-yellow-400 transition">
             <RiInstagramLine />
           </a>
