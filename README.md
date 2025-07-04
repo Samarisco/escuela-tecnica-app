@@ -1,75 +1,112 @@
 # 🏫 Proyecto Web Institucional – Escuela Secundaria Técnica
 
-Este proyecto representa una **plataforma web moderna** para una escuela secundaria técnica, diseñada con **React** y **Tailwind CSS**, con enfoque institucional, responsivo, accesible y fácil de mantener.
+Este proyecto representa una **plataforma web moderna y funcional** para una escuela secundaria técnica, desarrollada con **React**, **Tailwind CSS** y **FastAPI**. Diseñada para ser responsiva, intuitiva y escalable, permite gestionar profesores, alumnos, materias, grupos y foros académicos.
 
 ---
 
 ## 🛠️ Tecnologías utilizadas
 
+### Frontend
 - ⚛️ **React**
 - 🎨 **Tailwind CSS**
-- ✨ **Framer Motion** (animaciones)
-- 📦 **Vite** (como herramienta de desarrollo)
+- ✨ **Framer Motion**
+- ⚡ **Vite**
 - 💡 **React Icons**
-- 🧪 Componentes reutilizables y modularizados
+- 🧱 **Context API** para manejo de autenticación
+- 🌐 **Axios** para consumo de API
+
+### Backend
+- 🐍 **FastAPI**
+- 🐘 **PostgreSQL** (u otra base real conectada)
+- 🛠️ **SQLAlchemy** (ORM)
+- 🔐 **JWT opcional**
+- 📦 **Uvicorn** para servidor local
 
 ---
 
 ## 📋 Funcionalidades implementadas
 
-- ✅ Navegación responsive (menú fijo y hamburguesa en móvil)
-- ✅ Cambio de sección dinámico sin recarga (Hero interactivo)
-- ✅ Sección de noticias visuales y compactas
-- ✅ Slider automático de imágenes institucionales
-- ✅ Modal de login con efecto *glassmorphism*
-- ✅ Cambio de tema (paleta de colores institucional vs alternativa)
-- ✅ Transiciones animadas entre secciones
-- ✅ Diseño adaptado a dispositivos móviles
+### 🌐 Frontend
+
+- ✅ Navegación responsiva y hero interactivo
+- ✅ Modal de login animado (glassmorphism + Framer Motion)
+- ✅ Paleta de colores institucional alternable
+- ✅ Sistema de roles: administrador, profesor y alumno
+- ✅ Interfaz diferenciada por rol:
+  - Admin: gestión de profesores, materias, grupos y alumnos
+  - Profesor: gestión de grupos y foros por materia
+  - Alumno: acceso a foros y anuncios por grupo
+- ✅ CRUD dinámico y conectado para:
+  - Profesores (alta/baja, generación de usuarios)
+  - Materias
+  - Grupos
+  - Alumnos (con generación automática de credenciales)
+- ✅ Foro **global** y **grupal**:
+  - Publicación de anuncios por parte de profesores
+  - Comentarios y reacciones por alumnos
+  - Visualización de nombre, materia y grupo en publicaciones
+- ✅ Diseño adaptado a dispositivos móviles y transiciones suaves
+
+### 🔧 Backend
+
+- ✅ Autenticación por rol (Admin / Profesor / Alumno)
+- ✅ Login persistente (localStorage + Context API)
+- ✅ Endpoints RESTful conectados a base de datos
+- ✅ CRUD para usuarios, materias, grupos y foros
+- ✅ Lógica de validación, middlewares, manejo de errores
+- ✅ Asociación de entidades (por ejemplo, profesor con grupo y materia)
+- ✅ Comentarios y reacciones por endpoint
 
 ---
 
 ## 🖼️ Capturas del proyecto
 
-| Página principal | Modal de login | Slider e imágenes |
-|------------------|----------------|-------------------|
-| ![Home](screenshots/home.png) | ![Login](screenshots/login.png) | ![Slider](screenshots/slider.png) |
+| Página principal | Modal de login | Panel Admin |
+|------------------|----------------|-------------|
+| ![Home](screenshots/home.png) | ![Login](screenshots/login.png) | ![Admin](screenshots/admin.png) |
 
 ---
 
 ## 🚀 Instalación local
 
-1. **Clona este repositorio**
+### Frontend
+
 ```bash
 git clone https://github.com/tu-usuario/escuela-tecnica-app.git
 cd escuela-tecnica-app
-```
-
-2. **Instala dependencias**
-```bash
 npm install
-```
-
-3. **Ejecuta el proyecto**
-```bash
 npm run dev
 ```
 
-> Abre [http://localhost:5173](http://localhost:5173) para verlo en tu navegador.
+Abre [http://localhost:5173](http://localhost:5173) para ver el frontend.
+
+### Backend
+
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
+
+El backend correrá en [http://localhost:8000](http://localhost:8000)
 
 ---
 
 ## 📁 Estructura del proyecto
 
 ```
-├── public/
-│   └── img/         → Imágenes del sitio
-├── src/
-│   ├── components/  → Header, Hero, Footer, Slider, NewsSection, LoginModal
-│   ├── App.jsx      → Componente raíz
-│   └── main.jsx     → Punto de entrada
-├── tailwind.config.js
-├── index.html
-└── README.md
+├── frontend/
+│   ├── src/components/
+│   ├── src/pages/Admin/
+│   ├── src/pages/Profesor/
+│   ├── src/pages/Alumno/
+│   └── ...
+├── backend/
+│   ├── models/
+│   ├── routers/
+│   ├── database.py
+│   ├── main.py
+│   └── ...
 ```
 
 ---
@@ -77,14 +114,15 @@ npm run dev
 ## ✍️ Autor
 
 **Juan Samael Amaral Bravo**  
-Frontend Developer en formación | Ingeniería en Sistemas Computacionales  
-👨‍💻 [LinkedIn](https://www.linkedin.com/in/samaelamaral/) | 🕹️ Pasión por tecnología, educación y videojuegos
+Frontend y Backend Developer en formación | Ingeniería en Sistemas Computacionales  
+👨‍💻 [LinkedIn](https://www.linkedin.com/in/samaelamaral/) | 🕹️ Apasionado por la tecnología, educación y videojuegos
 
 ---
 
-## 📌 Pendientes próximos
+## 📌 Próximos pasos
 
-- [ ] Conectar backend con login real
-- [ ] Agregar formulario de contacto funcional
-- [ ] Agregar base de datos para noticias dinámicas
-- [ ] Subir a Vercel o GitHub Pages
+- [ ] Activar y documentar JWT para seguridad extra
+- [ ] Subir versión pública a **Vercel** y **Railway** o similar
+- [ ] Crear sistema de notificaciones internas
+- [ ] Agregar subida de archivos en foros y noticias
+- [ ] Implementar panel visual de estadísticas para el Admin
