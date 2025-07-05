@@ -108,9 +108,14 @@ Este proyecto representa una **plataforma web moderna y funcional** para una esc
 
 ## 🗼 Capturas del proyecto
 
-| Página principal              | Modal de login                  | Panel Admin                     |
-| ----------------------------- | ------------------------------- | ------------------------------- |
-| ![Home](screenshots/home.png) | ![Login](screenshots/login.png) | ![Admin](screenshots/admin.png) |
+* Página principal       
+![Home](screenshots/home.png) 
+
+* Modal de login     
+![Login](screenshots/login.png) 
+
+* Panel Admin                     
+![Admin](screenshots/admin.png) 
 
 ---
 
