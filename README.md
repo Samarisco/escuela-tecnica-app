@@ -95,7 +95,7 @@ Este proyecto representa una **plataforma web moderna y funcional** para una esc
 
 ---
 
-## 📌 Pendientes para el Día 4 (final de evaluación Turing-IA)
+## 📌 Pendientes para el futuro.
 
 * [ ] Agregar validaciones visuales en formularios
 * [ ] Incorporar reacciones reales tipo "Me gusta"
