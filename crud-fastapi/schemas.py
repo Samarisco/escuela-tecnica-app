@@ -158,3 +158,17 @@ class PublicacionGlobalOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+# ---------- REACIONES ----------
+class ReaccionCreate(BaseModel):
+    publicacion_id: int
+    tipo: str
+    autor: str
+
+class ReaccionOut(BaseModel):
+    id: int
+    tipo: str
+    autor: str
+
+    class Config:
+        orm_mode = True

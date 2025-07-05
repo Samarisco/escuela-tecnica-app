@@ -1,69 +1,41 @@
-// ✅ ModalWrapper.jsx actualizado con barra enriquecida
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  RiCloseLine,
-  RiImageAddLine,
-  RiAttachment2,
-  RiEmotionLine,
-  RiBold,
-  RiItalic,
-  RiLink,
-  RiFontSize2,
-  RiAlignCenter,
-  RiDeleteBinLine
-} from "react-icons/ri";
+import { RiCloseLine } from "react-icons/ri";
 
-export default function ModalWrapper({ isOpen, onClose, title, showToolbar = false, children }) {
+export default function ModalWrapper({ isOpen, onClose, title, children }) {
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-[100] flex items-center justify-center backdrop-blur-sm bg-white/30"
+          className="fixed inset-0 z-[100] flex items-center justify-center backdrop-blur-sm bg-black/30"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="bg-white rounded-lg shadow-lg p-6 w-[90%] max-w-2xl relative"
-            initial={{ y: 100, opacity: 0 }}
+            className="relative bg-white border-t-4 border-yellow-400 rounded-xl shadow-2xl p-6 pt-8 w-[95%] max-w-2xl"
+            initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
+            exit={{ y: 80, opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
+            {/* Botón cerrar fuera del header */}
             <button
               onClick={onClose}
-              className="absolute top-3 right-3 text-gray-500 hover:text-red-500 text-xl"
+              className="absolute -top-4 -right-4 bg-white text-[#4b1e25] hover:text-red-500 rounded-full p-2 shadow transition z-10"
               aria-label="Cerrar modal"
             >
-              <RiCloseLine />
+              <RiCloseLine size={24} />
             </button>
 
+            {/* Título */}
             {title && (
-              <h2 className="text-2xl font-bold text-[#4b1e25] mb-4 text-center">
-                {title}
-              </h2>
-            )}
-
-            {/* 🔧 Barra enriquecida opcional */}
-            {showToolbar && (
-              <div className="flex flex-wrap gap-2 justify-start mb-4 text-xl text-gray-600 px-1">
-                <label htmlFor="input-imagen" title="Insertar imagen" className="cursor-pointer">
-                  <RiImageAddLine />
-                </label>
-                <label htmlFor="input-archivo" title="Adjuntar archivo" className="cursor-pointer">
-                  <RiAttachment2 />
-                </label>
-                <button type="button" title="Emojis"><RiEmotionLine /></button>
-                <button type="button" title="Negrita"><RiBold /></button>
-                <button type="button" title="Cursiva"><RiItalic /></button>
-                <button type="button" title="Insertar enlace"><RiLink /></button>
-                <button type="button" title="Tamaño de fuente"><RiFontSize2 /></button>
-                <button type="button" title="Alinear texto"><RiAlignCenter /></button>
-                <button type="button" title="Borrar formato"><RiDeleteBinLine /></button>
+              <div className="mb-4 bg-[#4b1e25] text-white px-4 py-2 rounded-lg shadow text-center">
+                <h2 className="text-xl sm:text-2xl font-semibold">{title}</h2>
               </div>
             )}
 
-            <div>{children}</div>
+            {/* Contenido */}
+            <div className="text-gray-800">{children}</div>
           </motion.div>
         </motion.div>
       )}

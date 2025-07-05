@@ -1,11 +1,14 @@
-from fastapi import FastAPI, Depends, HTTPException, Security, status
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Security, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from typing import List
 from jose import JWTError, jwt
 from datetime import timedelta, datetime
 from passlib.context import CryptContext
+import shutil
+import os
 from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from database import SessionLocal, engine
 from models import (
@@ -27,6 +30,8 @@ from dependencies import get_current_user, allow_roles
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
@@ -52,6 +57,11 @@ def get_current_user(token: str = Security(oauth2_scheme)):
 
 # === CONFIGURACIÓN APP ===
 app = FastAPI()
+
+# ✅ ADICIONES PARA SUBIDA DE ARCHIVOS
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,
@@ -288,3 +298,141 @@ def ruta_segura(user_data: dict = Depends(get_current_user)):
         "usuario": user_data["sub"],
         "rol": user_data["rol"]
     }
+
+# === ACCESO A GRUPOS ===
+@app.get("/profesores/{usuario}/grupos", response_model=List[GrupoOut])
+def obtener_grupos_profesor(usuario: str, db: Session = Depends(get_db)):
+    profe = db.query(Teacher).filter(Teacher.usuario == usuario).first()
+    if not profe:
+        raise HTTPException(status_code=404, detail="Profesor no encontrado")
+
+    grupos_resultado = []
+
+    for grupo_str in profe.grupos:
+        try:
+            # Separar los componentes: "1A - Matutino"
+            grado_letra, turno = grupo_str.split(" - ")
+            grado = grado_letra[:-1]
+            letra = grado_letra[-1:]
+
+            grupo = db.query(Group).filter_by(grado=grado, letra=letra, turno=turno).first()
+            if grupo:
+                grupos_resultado.append(grupo)
+        except Exception as e:
+            print(f"Error al interpretar grupo '{grupo_str}':", e)
+            continue
+
+    return grupos_resultado
+
+
+
+# === FORO GLOBAL ===
+@app.get("/foro-global", response_model=List[PublicacionGlobalOut])
+def obtener_publicaciones(db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    publicaciones = db.query(PublicacionGlobal).order_by(PublicacionGlobal.fecha.desc()).all()
+    return publicaciones
+
+@app.post("/foro-global", response_model=PublicacionGlobalOut)
+def crear_publicacion(pub: PublicacionGlobalCreate, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    nueva = PublicacionGlobal(
+        titulo=pub.titulo,
+        contenido=pub.contenido,
+        autor=pub.autor,
+        imagen_url=pub.imagen_url,
+        archivo_url=pub.archivo_url
+    )
+    db.add(nueva)
+    db.commit()
+    db.refresh(nueva)
+    return nueva
+
+@app.post("/foro-global/comentario", response_model=ComentarioOut)
+def agregar_comentario(com: ComentarioCreate, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    nueva = Comentario(
+        publicacion_id=com.publicacion_id,
+        autor=com.autor,
+        contenido=com.contenido
+    )
+    db.add(nueva)
+    db.commit()
+    db.refresh(nueva)
+    return nueva
+
+# === SUBIR ARCHIVO ===
+@app.post("/subir-archivo")
+def subir_archivo(file: UploadFile = File(...)):
+    nombre_archivo = file.filename
+    ruta = os.path.join(UPLOAD_DIR, nombre_archivo)
+
+    with open(ruta, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return {"url": f"uploads/{nombre_archivo}"}
+
+# === ELIMINAR PUBLICACION ===
+@app.delete("/foro-global/{id}", status_code=204)
+def eliminar_publicacion_global(id: int, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    pub = db.query(PublicacionGlobal).filter(PublicacionGlobal.id == id).first()
+    if not pub:
+        raise HTTPException(status_code=404, detail="Publicación no encontrada")
+    if pub.autor != user["sub"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso para eliminar esta publicación")
+    db.delete(pub)
+    db.commit()
+    return
+
+
+# === EDITAR PUBLICACION ===
+@app.put("/foro-global/{id}", response_model=PublicacionGlobalOut)
+def editar_publicacion_global(id: int, actualizada: PublicacionGlobalCreate, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    pub = db.query(PublicacionGlobal).filter(PublicacionGlobal.id == id).first()
+    if not pub:
+        raise HTTPException(status_code=404, detail="Publicación no encontrada")
+    if pub.autor != user["sub"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso para editar esta publicación")
+
+    pub.titulo = actualizada.titulo
+    pub.contenido = actualizada.contenido
+    pub.imagen_url = actualizada.imagen_url
+    pub.archivo_url = actualizada.archivo_url
+    db.commit()
+    db.refresh(pub)
+    return pub
+
+
+# === ELIMINAR COMENTARIO ===
+@app.delete("/foro-global/comentario/{id}", status_code=204)
+def eliminar_comentario(id: int, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    comentario = db.query(Comentario).filter(Comentario.id == id).first()
+    if not comentario:
+        raise HTTPException(status_code=404, detail="Comentario no encontrado")
+    if comentario.autor != user["sub"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso para eliminar este comentario")
+    db.delete(comentario)
+    db.commit()
+    return
+
+
+# === REACCIONES ===
+@app.post("/foro-global/reaccion", response_model=ReaccionOut)
+def reaccionar(reaccion: ReaccionCreate, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    existente = db.query(Reaccion).filter_by(
+        publicacion_id=reaccion.publicacion_id,
+        autor=reaccion.autor,
+        tipo=reaccion.tipo
+    ).first()
+
+    if existente:
+        db.delete(existente)
+        db.commit()
+        return existente  # lo quitó
+    else:
+        nueva = Reaccion(
+            publicacion_id=reaccion.publicacion_id,
+            tipo=reaccion.tipo,
+            autor=reaccion.autor
+        )
+        db.add(nueva)
+        db.commit()
+        db.refresh(nueva)
+        return nueva

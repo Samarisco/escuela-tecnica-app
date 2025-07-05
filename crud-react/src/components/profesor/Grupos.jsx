@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { RiGroupLine } from "react-icons/ri";
+import { RiGroupLine, RiUser3Line } from "react-icons/ri";
 
 export default function Grupos() {
   const [grupos, setGrupos] = useState([]);
@@ -9,113 +9,141 @@ export default function Grupos() {
   const [grupoSeleccionado, setGrupoSeleccionado] = useState(null);
 
   const token = localStorage.getItem("token");
+  const usuario = localStorage.getItem("usuario");
+
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
 
   useEffect(() => {
-    const usuario = localStorage.getItem("usuario");
-
     if (!usuario) {
       setError("No se encontró el usuario del profesor.");
       setLoading(false);
       return;
     }
 
-    fetch(`http://localhost:8000/profesores/${usuario}/grupos`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Error al obtener los grupos");
-        return res.json();
-      })
-      .then((data) => {
+    const fetchGrupos = async () => {
+      try {
+        const res = await fetch(`http://localhost:8000/profesores/${usuario}/grupos`, { headers });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.detail || "Error al obtener los grupos");
+        }
+
+        const data = await res.json();
         setGrupos(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
+      } catch (err) {
+        console.error("Error:", err.message);
         setError("Error al cargar los grupos.");
+      } finally {
         setLoading(false);
-      });
-  }, []);
+      }
+    };
+
+    fetchGrupos();
+  }, [usuario]);
 
   const normalizar = (str) =>
     str?.toString().trim().toLowerCase().replace(/[\s°\-]+/g, "");
 
+  const obtenerClaveGrupo = (grupo) =>
+    `${grupo.grado}${grupo.letra}-${grupo.turno}`.toLowerCase().replace(/\s/g, "");
+
   const toggleDetallesGrupo = async (grupo) => {
-    if (grupoSeleccionado === grupo) {
+    const claveGrupo = obtenerClaveGrupo(grupo);
+
+    if (grupoSeleccionado === claveGrupo) {
       setGrupoSeleccionado(null);
       return;
     }
 
-    setGrupoSeleccionado(grupo);
+    setGrupoSeleccionado(claveGrupo);
 
-    if (!alumnosPorGrupo[grupo]) {
+    if (!alumnosPorGrupo[claveGrupo]) {
       try {
-        const res = await fetch("http://localhost:8000/alumnos");
-        const data = await res.json();
+        const res = await fetch("http://localhost:8000/alumnos", { headers });
 
-        const grupoNormalizado = normalizar(grupo);
+        if (!res.ok) throw new Error("Error al obtener alumnos");
+
+        const data = await res.json();
         const alumnosDelGrupo = data.filter(
-          (a) => normalizar(a.grupo) === grupoNormalizado
+          (a) => normalizar(a.grupo) === normalizar(`${grupo.grado}${grupo.letra}${grupo.turno}`)
         );
 
-        setAlumnosPorGrupo((prev) => ({ ...prev, [grupo]: alumnosDelGrupo }));
+        setAlumnosPorGrupo((prev) => ({ ...prev, [claveGrupo]: alumnosDelGrupo }));
       } catch (err) {
-        console.error("Error al obtener alumnos:", err);
-        setAlumnosPorGrupo((prev) => ({ ...prev, [grupo]: [] }));
+        console.error("Error al obtener alumnos:", err.message);
+        setAlumnosPorGrupo((prev) => ({ ...prev, [claveGrupo]: [] }));
       }
     }
   };
 
-  if (loading) return <p>Cargando grupos...</p>;
+  if (loading) return <p className="text-gray-600">Cargando grupos...</p>;
   if (error) return <p className="text-red-600">{error}</p>;
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6">Grupos asignados</h2>
+      <h2 className="text-2xl font-bold text-[#4b1e25] mb-6">Grupos asignados</h2>
 
       {grupos.length === 0 ? (
         <p className="text-gray-600">No tienes grupos asignados.</p>
       ) : (
         <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {grupos.map((grupo, i) => (
-            <div
-              key={i}
-              className="bg-white shadow-md border border-gray-200 rounded-lg p-6 text-center hover:shadow-lg transition"
-            >
-              <RiGroupLine className="text-4xl mx-auto text-[#4b1e25]" />
-              <h3 className="text-xl font-semibold text-[#4b1e25] mt-2">
-                {grupo}
-              </h3>
-              <button
-                onClick={() => toggleDetallesGrupo(grupo)}
-                className="mt-3 px-4 py-2 bg-[#4b1e25] text-white rounded hover:bg-[#652837]"
+          {grupos.map((grupo) => {
+            const clave = obtenerClaveGrupo(grupo);
+            return (
+              <div
+                key={grupo.id}
+                className="bg-white shadow-md border-t-4 border-yellow-400 rounded-xl p-5 hover:shadow-lg transition"
               >
-                {grupoSeleccionado === grupo
-                  ? "Ocultar detalles"
-                  : "Ver alumnos"}
-              </button>
+                <div className="flex flex-col items-center text-center">
+                  <RiGroupLine className="text-4xl text-[#7c4367]" />
+                  <h3 className="text-xl font-semibold text-[#4b1e25] mt-2">
+                    {grupo.grado}°{grupo.letra} - Turno {grupo.turno}
+                  </h3>
 
-              {grupoSeleccionado === grupo && (
-                <div className="mt-4 text-left">
-                  <h4 className="text-lg font-semibold mb-2">Alumnos:</h4>
-                  {alumnosPorGrupo[grupo]?.length > 0 ? (
-                    <ul className="text-sm space-y-1">
-                      {alumnosPorGrupo[grupo].map((a) => (
-                        <li key={a.id} className="border-b py-1">
-                          {a.nombre} {a.apellido} •{" "}
-                          <span className="font-mono text-gray-600">
-                            {a.usuario}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-gray-500 text-sm">
-                      No hay alumnos registrados en este grupo.
-                    </p>
-                  )}
+                  <button
+                    onClick={() => toggleDetallesGrupo(grupo)}
+                    className="mt-4 px-4 py-2 bg-[#4b1e25] text-white rounded hover:bg-[#652837] transition"
+                  >
+                    {grupoSeleccionado === clave ? "Ocultar detalles" : "Ver alumnos"}
+                  </button>
                 </div>
-              )}
-            </div>
-          ))}
+
+                {grupoSeleccionado === clave && (
+                  <div className="mt-4 text-left">
+                    <h4 className="text-lg font-semibold text-[#4b1e25] mb-2">
+                      Alumnos del grupo
+                    </h4>
+                    {alumnosPorGrupo[clave]?.length > 0 ? (
+                      <ul className="text-sm space-y-1 max-h-48 overflow-y-auto pr-1">
+                        {alumnosPorGrupo[clave].map((a) => (
+                          <li
+                            key={a.id}
+                            className="flex items-center justify-between border-b py-1"
+                          >
+                            <span className="flex items-center gap-2">
+                              <RiUser3Line className="text-[#7c4367]" />
+                              {a.nombre} {a.apellido}
+                            </span>
+                            <span className="font-mono text-xs text-gray-600">
+                              {a.usuario}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-gray-500 text-sm">
+                        No hay alumnos registrados en este grupo.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

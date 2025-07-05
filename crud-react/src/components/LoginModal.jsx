@@ -91,7 +91,7 @@ const LoginModal = ({ isOpen, onClose }) => {
                   value={employeeNumber}
                   onChange={(e) => setEmployeeNumber(e.target.value)}
                   className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#4b1e25]"
-                  placeholder="gutierreza"
+                  placeholder="amarals"
                 />
               </div>
 

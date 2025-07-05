@@ -7,7 +7,7 @@ import NewsSection from "./components/NewsSection";
 import Footer from "./components/Footer";
 import LoginModal from "./components/LoginModal";
 import PrivateRoute from "./components/PrivateRoute";
-
+import ChatBotSimulado from "./components/ChatBotSimulado";
 
 // Vistas por rol
 import AdminDashboard from "./pages/Admin/Dashboard";
@@ -36,21 +36,19 @@ function App() {
                 openLogin={() => setIsLoginOpen(true)}
               />
 
+              {/* HERO SIEMPRE PRESENTE */}
               <section className="pt-8 xl:pt-12 pb-10">
                 <Hero section={section} />
               </section>
 
-              {section === "inicio" && (
-                <>
-                  <section className="pt-4 xl:pt-10 pb-10 bg-white">
-                    <ImageSlider />
-                  </section>
+              {/* ESTAS SECCIONES SIEMPRE VISIBLES */}
+              <section className="pt-4 xl:pt-10 pb-10 bg-white">
+                <ImageSlider />
+              </section>
 
-                  <section className="pt-4 xl:pt-10 pb-10 bg-white">
-                    <NewsSection />
-                  </section>
-                </>
-              )}
+              <section className="pt-4 xl:pt-10 pb-10 bg-white">
+                <NewsSection />
+              </section>
 
               <Footer />
               <LoginModal
@@ -66,12 +64,12 @@ function App() {
           path="/admin"
           element={
             <PrivateRoute allowedRoles={["admin"]}>
-              <AdminDashboard />
+              <DashboardLayout />
             </PrivateRoute>
           }
         />
 
-        {/* Ruta para profesor: usa DashboardLayout con navegación interna */}
+        {/* Ruta para profesor */}
         <Route
           path="/profesor"
           element={
@@ -86,7 +84,7 @@ function App() {
           path="/alumno"
           element={
             <PrivateRoute allowedRoles={["alumno"]}>
-              <AlumnoDashboard />
+              <DashboardLayout />
             </PrivateRoute>
           }
         />
@@ -94,6 +92,9 @@ function App() {
         {/* Ruta para acceso no autorizado */}
         <Route path="/unauthorized" element={<Unauthorized />} />
       </Routes>
+
+      {/* Este componente está fuera de las rutas, así que aparece en TODA la app */}
+      <ChatBotSimulado />
     </Router>
   );
 }

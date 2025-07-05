@@ -13,7 +13,6 @@ export default function GestionarProfesores() {
 
   const token = localStorage.getItem("token");
 
-  // Obtener datos
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -113,30 +112,30 @@ export default function GestionarProfesores() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6">Gestión de Profesores</h2>
+      <h2 className="text-2xl font-bold mb-6 text-[#4b1e25]">Gestión de Profesores</h2>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {profesores.map((p) => (
-          <div key={p.id} className="bg-white shadow rounded border p-4">
-            <p className="font-bold text-[#4b1e25]">
+          <div key={p.id} className="bg-white rounded-xl shadow border-l-4 border-yellow-400 p-4">
+            <p className="text-lg font-bold text-[#4b1e25]">
               {p.nombre} {p.apellido}
             </p>
-            <p className="text-sm">Usuario: {p.usuario}</p>
-            <p className="text-sm">Materia: {p.materia}</p>
-            <p className="text-sm">
-              Grupos: {p.grupos && p.grupos.length > 0 ? p.grupos.join(", ") : "No asignado"}
+            <p className="text-sm text-gray-700">Usuario: {p.usuario}</p>
+            <p className="text-sm text-gray-700">Materia: {p.materia}</p>
+            <p className="text-sm text-gray-700">
+              Grupos: {p.grupos?.length ? p.grupos.join(", ") : "No asignado"}
             </p>
 
-            <div className="flex gap-3 mt-2">
+            <div className="flex gap-4 mt-4">
               <button
                 onClick={() => abrirModal(p)}
-                className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                className="text-[#7c4367] hover:text-yellow-400 flex items-center gap-1 transition"
               >
                 <RiEdit2Line /> Editar
               </button>
               <button
                 onClick={() => abrirCambioPassword(p)}
-                className="text-orange-600 hover:text-orange-800 flex items-center gap-1"
+                className="text-[#4b1e25] hover:text-yellow-400 flex items-center gap-1 transition"
               >
                 <RiLockPasswordLine /> Contraseña
               </button>
@@ -154,7 +153,9 @@ export default function GestionarProfesores() {
         {profesorSeleccionado && (
           <div className="grid gap-4">
             <div>
-              <label className="text-sm font-medium">Materia asignada</label>
+              <label className="text-sm font-medium text-[#4b1e25] mb-1 block">
+                Materia asignada
+              </label>
               <select
                 value={profesorSeleccionado.materia}
                 onChange={(e) =>
@@ -163,7 +164,7 @@ export default function GestionarProfesores() {
                     materia: e.target.value,
                   })
                 }
-                className="border p-2 rounded w-full"
+                className="border border-gray-300 p-2 rounded w-full focus:ring-2 focus:ring-[#7c4367] outline-none"
               >
                 {materias.map((m, i) => (
                   <option key={i} value={m.nombre}>
@@ -174,14 +175,16 @@ export default function GestionarProfesores() {
             </div>
 
             <div>
-              <label className="text-sm font-medium">Grupos asignados</label>
+              <label className="text-sm font-medium text-[#4b1e25] mb-1 block">
+                Grupos asignados
+              </label>
               <div className="border rounded p-2 max-h-40 overflow-y-auto space-y-1">
                 {grupos.map((g, i) => {
                   const valor = `${g.grado}${g.letra} - ${g.turno}`;
-                  const estaSeleccionado = (profesorSeleccionado.grupos || []).includes(valor);
+                  const estaSeleccionado = profesorSeleccionado.grupos?.includes(valor);
 
                   return (
-                    <label key={i} className="flex items-center gap-2">
+                    <label key={i} className="flex items-center gap-2 text-sm text-gray-800">
                       <input
                         type="checkbox"
                         checked={estaSeleccionado}
@@ -205,7 +208,7 @@ export default function GestionarProfesores() {
 
             <button
               onClick={guardarCambios}
-              className="bg-[#4b1e25] text-white px-4 py-2 rounded hover:bg-[#652837] mt-4"
+              className="bg-[#4b1e25] text-white px-4 py-2 rounded hover:bg-[#652837] mt-4 transition"
             >
               Guardar cambios
             </button>
@@ -220,17 +223,19 @@ export default function GestionarProfesores() {
         title={`Cambiar contraseña: ${profesorSeleccionado?.nombre}`}
       >
         <div className="space-y-4">
-          <label className="block text-sm font-medium">Nueva contraseña</label>
+          <label className="block text-sm font-medium text-[#4b1e25]">
+            Nueva contraseña
+          </label>
           <input
             type="password"
             value={nuevaPassword}
             onChange={(e) => setNuevaPassword(e.target.value)}
-            className="border p-2 rounded w-full"
+            className="border border-gray-300 p-2 rounded w-full focus:ring-2 focus:ring-[#7c4367] outline-none"
             placeholder="********"
           />
           <button
             onClick={guardarPassword}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            className="bg-[#4b1e25] text-white px-4 py-2 rounded hover:bg-yellow-400 hover:text-[#4b1e25] transition"
           >
             Actualizar contraseña
           </button>
