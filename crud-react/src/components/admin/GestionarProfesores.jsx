@@ -11,22 +11,38 @@ export default function GestionarProfesores() {
   const [modalPassword, setModalPassword] = useState(false);
   const [nuevaPassword, setNuevaPassword] = useState("");
 
+  const token = localStorage.getItem("token");
+
+  // Obtener datos
   useEffect(() => {
-    fetch("http://localhost:8000/profesores")
-      .then((res) => res.json())
-      .then(setProfesores)
-      .catch(console.error);
+    const fetchData = async () => {
+      try {
+        const [profesoresRes, materiasRes, gruposRes] = await Promise.all([
+          fetch("http://localhost:8000/profesores", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch("http://localhost:8000/materias", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch("http://localhost:8000/grupos", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
 
-    fetch("http://localhost:8000/materias")
-      .then((res) => res.json())
-      .then(setMaterias)
-      .catch(console.error);
+        const profesoresData = await profesoresRes.json();
+        const materiasData = await materiasRes.json();
+        const gruposData = await gruposRes.json();
 
-    fetch("http://localhost:8000/grupos")
-      .then((res) => res.json())
-      .then(setGrupos)
-      .catch(console.error);
-  }, []);
+        setProfesores(profesoresData);
+        setMaterias(materiasData);
+        setGrupos(gruposData);
+      } catch (error) {
+        console.error("Error al obtener datos:", error);
+      }
+    };
+
+    fetchData();
+  }, [token]);
 
   const abrirModal = (profesor) => {
     setProfesorSeleccionado({ ...profesor });
@@ -53,17 +69,21 @@ export default function GestionarProfesores() {
     try {
       const res = await fetch(`http://localhost:8000/profesores/${profesorSeleccionado.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(profesorSeleccionado),
       });
+
       if (!res.ok) throw new Error("Error al guardar");
 
       alert("Cambios guardados correctamente");
       cerrarModal();
-      const nuevos = profesores.map((p) =>
-        p.id === profesorSeleccionado.id ? profesorSeleccionado : p
+
+      setProfesores((prev) =>
+        prev.map((p) => (p.id === profesorSeleccionado.id ? profesorSeleccionado : p))
       );
-      setProfesores(nuevos);
     } catch (err) {
       alert("Error al guardar los cambios");
       console.error(err);
@@ -74,9 +94,13 @@ export default function GestionarProfesores() {
     try {
       const res = await fetch(`http://localhost:8000/profesores/${profesorSeleccionado.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ password: nuevaPassword }),
       });
+
       if (!res.ok) throw new Error("Error al cambiar la contraseña");
 
       alert("Contraseña actualizada correctamente");
@@ -189,7 +213,7 @@ export default function GestionarProfesores() {
         )}
       </ModalWrapper>
 
-      {/* Modal para contraseña */}
+      {/* Modal de contraseña */}
       <ModalWrapper
         isOpen={modalPassword}
         onClose={cerrarPasswordModal}
@@ -204,7 +228,6 @@ export default function GestionarProfesores() {
             className="border p-2 rounded w-full"
             placeholder="********"
           />
-
           <button
             onClick={guardarPassword}
             className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"

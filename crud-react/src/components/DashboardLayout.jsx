@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -26,7 +26,7 @@ import ProfesorDashboard from "../pages/Profesor/Dashboard";
 import ForoFiltrado from "./ForoGlobal";
 
 const DashboardLayout = () => {
-  const { role, logout } = useAuth();
+  const { role, usuario, logout } = useAuth();
   const navigate = useNavigate();
 
   const [showMenu, setShowMenu] = useState(false);
@@ -36,6 +36,14 @@ const DashboardLayout = () => {
   const [abrirModalMateria, setAbrirModalMateria] = useState(false);
   const [abrirModalGrupo, setAbrirModalGrupo] = useState(false);
   const [abrirModalAlumno, setAbrirModalAlumno] = useState(false);
+
+  const grupoAlumno = localStorage.getItem("grupo");
+
+  useEffect(() => {
+    console.log("📌 Rol:", role);
+    console.log("📌 Usuario:", usuario);
+    console.log("📌 Grupo Alumno:", grupoAlumno);
+  }, [role, usuario]);
 
   const handleLogout = () => {
     logout();
@@ -68,9 +76,6 @@ const DashboardLayout = () => {
   const links = menuItems[role] || [];
 
   const renderContenido = () => {
-    const usuario = localStorage.getItem("usuario");
-    const grupoAlumno = localStorage.getItem("grupo"); // 👈 Asegúrate de guardar esto al loguear al alumno
-
     if (role === "profesor") {
       switch (vista) {
         case "grupos":
@@ -84,30 +89,30 @@ const DashboardLayout = () => {
     }
 
     if (role === "alumno") {
-  switch (vista) {
-    case "foro":
-      return (
-        <div>
-          <h1 className="text-xl font-bold mb-4">
-            Foro del grupo: <span className="text-[#4b1e25]">{grupoAlumno || "Grupo no definido"}</span>
-          </h1>
-          <ForoFiltrado role="alumno" grupoAlumno={grupoAlumno} />
-        </div>
-      );
-    case "tareas":
-      return <h1 className="text-xl font-bold">Mis tareas (próximamente)</h1>;
-    case "calificaciones":
-      return <h1 className="text-xl font-bold">Mis calificaciones (próximamente)</h1>;
-    case "material":
-      return <h1 className="text-xl font-bold">Material del curso (próximamente)</h1>;
-    default:
-      return (
-        <h1 className="text-xl font-bold">
-          Bienvenido, Alumno del grupo <span className="text-[#4b1e25]">{grupoAlumno || "Grupo no definido"}</span>
-        </h1>
-      );
-  }
-}
+      switch (vista) {
+        case "foro":
+          return (
+            <div>
+              <h1 className="text-xl font-bold mb-4">
+                Foro del grupo: <span className="text-[#4b1e25]">{grupoAlumno || "Grupo no definido"}</span>
+              </h1>
+              <ForoFiltrado role="alumno" grupoAlumno={grupoAlumno} />
+            </div>
+          );
+        case "tareas":
+          return <h1 className="text-xl font-bold">Mis tareas (próximamente)</h1>;
+        case "calificaciones":
+          return <h1 className="text-xl font-bold">Mis calificaciones (próximamente)</h1>;
+        case "material":
+          return <h1 className="text-xl font-bold">Material del curso (próximamente)</h1>;
+        default:
+          return (
+            <h1 className="text-xl font-bold">
+              Bienvenido, Alumno del grupo <span className="text-[#4b1e25]">{grupoAlumno || "Grupo no definido"}</span>
+            </h1>
+          );
+      }
+    }
 
     if (role === "admin") {
       switch (vista) {

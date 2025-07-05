@@ -1,6 +1,6 @@
 // src/pages/Unauthorized.jsx
 import React from "react";
-
+const token = localStorage.getItem("token");
 export default function Unauthorized() {
   return (
     <div className="text-center mt-10">

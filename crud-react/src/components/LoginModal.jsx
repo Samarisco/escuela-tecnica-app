@@ -19,12 +19,19 @@ const LoginModal = ({ isOpen, onClose }) => {
 
     try {
       const result = await login(employeeNumber, password);
-      loginToContext(result.role, employeeNumber);
+
+      // ✅ Guardar token en contexto y localStorage
+      loginToContext(result.role, result.usuario, result.access_token);
+      localStorage.setItem("token", result.access_token); // 🔐 necesario para peticiones protegidas
       alert(`¡Bienvenido ${result.usuario}!`);
 
       // 🔍 Obtener información adicional si es alumno
       if (result.role === "alumno") {
-        const res = await fetch(`http://localhost:8000/usuario-info/${employeeNumber}`);
+        const res = await fetch(`http://localhost:8000/usuario-info/${employeeNumber}`, {
+          headers: {
+            Authorization: `Bearer ${result.access_token}`,
+          },
+        });
         const data = await res.json();
         if (data && data.grupo) {
           localStorage.setItem("grupo", data.grupo);
@@ -37,6 +44,7 @@ const LoginModal = ({ isOpen, onClose }) => {
       if (result.role === "admin") navigate("/admin");
       else if (result.role === "profesor") navigate("/profesor");
       else if (result.role === "alumno") navigate("/alumno");
+
     } catch (err) {
       setError(err.message || "Error al iniciar sesión");
     }

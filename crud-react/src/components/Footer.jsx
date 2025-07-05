@@ -6,6 +6,8 @@ import {
   RiGithubLine,
 } from "react-icons/ri";
 
+const token = localStorage.getItem("token");
+
 const Footer = () => {
   return (
     <footer className="bg-[#4b1e25] p-8 xl:p-20 text-white">

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-
+const token = localStorage.getItem("token");
 export default function ProfesorDashboard() {
   const [grupos, setGrupos] = useState([]);
   const [loading, setLoading] = useState(true);

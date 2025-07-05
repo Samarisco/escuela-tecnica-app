@@ -1,54 +1,58 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Security, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from typing import List
-
-# Modelos
+from jose import JWTError, jwt
+from datetime import timedelta, datetime
+from passlib.context import CryptContext
+from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+from database import SessionLocal, engine
 from models import (
-    Base,
-    User,
-    Subject,
-    Group,
-    Teacher,
-    Student,
-    Publicacion,
-    PublicacionGlobal,
-    Comentario,
-    Reaccion
+    Base, User, Subject, Group, Teacher, Student,
+    Publicacion, PublicacionGlobal, Comentario, Reaccion
 )
-
-# Esquemas
 from schemas import (
-    AdminCreate,
-    LoginRequest,
-    LoginResponse,
-    MateriaCreate,
-    MateriaOut,
-    GrupoCreate,
-    GrupoOut,
-    ProfesorCreate,
-    ProfesorOut,
-    AlumnoCreate,
-    AlumnoOut,
-    PublicacionCreate,
-    PublicacionOut,
-    PublicacionGlobalCreate,
-    PublicacionGlobalOut,
-    ComentarioCreate,
-    ComentarioOut,
-    ReaccionCreate,
-    ReaccionOut,
+    AdminCreate, LoginResponse,
+    MateriaCreate, MateriaOut,
+    GrupoCreate, GrupoOut,
+    ProfesorCreate, ProfesorOut,
+    AlumnoCreate, AlumnoOut,
+    PublicacionGlobalCreate, PublicacionGlobalOut,
+    ComentarioCreate, ComentarioOut,
+    ReaccionCreate, ReaccionOut,
     AlumnoPasswordUpdate
 )
+from dependencies import get_current_user, allow_roles
 
-# DB y seguridad
-from database import SessionLocal, engine
-from passlib.context import CryptContext
 
-# Inicializar FastAPI
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def get_current_user(token: str = Security(oauth2_scheme)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Token inválido o expirado",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        rol: str = payload.get("rol")
+        if username is None or rol is None:
+            raise credentials_exception
+        return {"sub": username, "rol": rol}
+    except JWTError:
+        raise credentials_exception
+
+# === CONFIGURACIÓN APP ===
 app = FastAPI()
 
-# Middleware CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -57,10 +61,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Crear tablas
 Base.metadata.create_all(bind=engine)
 
-# Configurar hash de contraseñas
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def get_password_hash(password: str):
@@ -69,7 +71,6 @@ def get_password_hash(password: str):
 def verify_password(plain_password: str, hashed_password: str):
     return pwd_context.verify(plain_password, hashed_password)
 
-# Dependencia de base de datos
 def get_db():
     db = SessionLocal()
     try:
@@ -77,57 +78,68 @@ def get_db():
     finally:
         db.close()
 
-# ---------- RUTA INICIAL ----------
+# === RUTA DE PRUEBA ===
 @app.get("/")
 def root():
     return {"message": "Servidor funcionando correctamente ✅"}
 
-
-# ---------- LOGIN ----------
+# === LOGIN UNIFICADO ===
 @app.post("/login", response_model=LoginResponse)
-def login_user(credentials: LoginRequest, db: Session = Depends(get_db)):
-    try:
-        # Admin
-        user = db.query(User).filter(User.employee_number == credentials.employee_number).first()
-        if user and verify_password(credentials.password, user.password):
-            return {"role": user.role, "usuario": user.employee_number}
+def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    username = form_data.username
+    password = form_data.password
 
-        # Profesor
-        profe = db.query(Teacher).filter(Teacher.usuario == credentials.employee_number).first()
-        if profe and verify_password(credentials.password, profe.password):
-            return {"role": profe.role, "usuario": profe.usuario}
+    # ADMIN
+    user = db.query(User).filter(User.employee_number == username).first()
+    if user and verify_password(password, user.password):
+        token = create_access_token({"sub": user.employee_number, "rol": user.role})
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "role": user.role,
+            "usuario": user.employee_number
+        }
 
-        # Alumno ✅
-        alumno = db.query(Student).filter(Student.usuario == credentials.employee_number).first()
-        if alumno and verify_password(credentials.password, alumno.password):
-            return {"role": "alumno", "usuario": alumno.usuario}
+    # PROFESOR
+    profe = db.query(Teacher).filter(Teacher.usuario == username).first()
+    if profe and verify_password(password, profe.password):
+        token = create_access_token({"sub": profe.usuario, "rol": profe.role})
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "role": profe.role,
+            "usuario": profe.usuario
+        }
 
-        raise HTTPException(status_code=400, detail="Credenciales incorrectas")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Error interno")
+    # ALUMNO
+    alumno = db.query(Student).filter(Student.usuario == username).first()
+    if alumno and verify_password(password, alumno.password):
+        token = create_access_token({"sub": alumno.usuario, "rol": "alumno"})
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "role": "alumno",
+            "usuario": alumno.usuario
+        }
 
+    raise HTTPException(status_code=400, detail="Credenciales incorrectas")
 
-# ---------- ADMIN ----------
+# === REGISTRO ADMIN ===
 @app.post("/register-admin")
 def register_admin(admin: AdminCreate, db: Session = Depends(get_db)):
     existing = db.query(User).filter(User.employee_number == admin.employee_number).first()
     if existing:
         raise HTTPException(status_code=400, detail="Ya existe ese número de empleado")
-
     hashed_password = get_password_hash(admin.password)
-    new_admin = User(
-        employee_number=admin.employee_number,
-        password=hashed_password,
-        role="admin",
-    )
+    new_admin = User(employee_number=admin.employee_number, password=hashed_password, role="admin")
     db.add(new_admin)
     db.commit()
     db.refresh(new_admin)
     return {"message": "Administrador creado", "id": new_admin.id}
 
-# ---------- MATERIAS ----------
+# === MATERIAS ===
 @app.post("/materias", response_model=MateriaOut)
-def crear_materia(materia: MateriaCreate, db: Session = Depends(get_db)):
+def crear_materia(materia: MateriaCreate, db: Session = Depends(get_db), user: dict = Depends(allow_roles("admin"))):
     existe = db.query(Subject).filter(Subject.nombre == materia.nombre).first()
     if existe:
         raise HTTPException(status_code=400, detail="Materia ya existente")
@@ -141,7 +153,7 @@ def crear_materia(materia: MateriaCreate, db: Session = Depends(get_db)):
 def listar_materias(db: Session = Depends(get_db)):
     return db.query(Subject).all()
 
-# ---------- GRUPOS ----------
+# === GRUPOS ===
 @app.post("/grupos", response_model=GrupoOut)
 def crear_grupo(grupo: GrupoCreate, db: Session = Depends(get_db)):
     existe = db.query(Group).filter(
@@ -161,13 +173,12 @@ def crear_grupo(grupo: GrupoCreate, db: Session = Depends(get_db)):
 def listar_grupos(db: Session = Depends(get_db)):
     return db.query(Group).all()
 
-# ---------- PROFESORES ----------
+# === PROFESORES ===
 @app.post("/profesores", response_model=ProfesorOut)
-def crear_profesor(profesor: ProfesorCreate, db: Session = Depends(get_db)):
+def crear_profesor(profesor: ProfesorCreate, db: Session = Depends(get_db), user: dict = Depends(allow_roles("admin"))):
     existe = db.query(Teacher).filter(Teacher.usuario == profesor.usuario).first()
     if existe:
         raise HTTPException(status_code=400, detail="Usuario ya existe")
-
     hashed_password = get_password_hash(profesor.password)
     nuevo = Teacher(
         nombre=profesor.nombre,
@@ -188,14 +199,22 @@ def crear_profesor(profesor: ProfesorCreate, db: Session = Depends(get_db)):
 def listar_profesores(db: Session = Depends(get_db)):
     return db.query(Teacher).all()
 
-@app.get("/profesores/{usuario}/grupos", response_model=List[str])
-def obtener_grupos_profesor(usuario: str, db: Session = Depends(get_db)):
-    profe = db.query(Teacher).filter(Teacher.usuario == usuario).first()
-    if not profe:
+@app.put("/profesores/{profesor_id}")
+def actualizar_profesor(profesor_id: int, datos: dict, db: Session = Depends(get_db)):
+    profesor = db.query(Teacher).filter(Teacher.id == profesor_id).first()
+    if not profesor:
         raise HTTPException(status_code=404, detail="Profesor no encontrado")
-    return profe.grupos or []
+    if "password" in datos:
+        profesor.password = get_password_hash(datos["password"])
+    if "materia" in datos:
+        profesor.materia = datos["materia"]
+    if "grupos" in datos:
+        profesor.grupos = datos["grupos"]
+    db.commit()
+    db.refresh(profesor)
+    return {"message": "Profesor actualizado correctamente"}
 
-# ---------- ALUMNOS ----------
+# === ALUMNOS ===
 @app.post("/alumnos", response_model=AlumnoOut)
 def crear_alumno(alumno: AlumnoCreate, db: Session = Depends(get_db)):
     base_usuario = f"{alumno.apellido.lower()}{alumno.nombre[0].lower()}"
@@ -207,7 +226,6 @@ def crear_alumno(alumno: AlumnoCreate, db: Session = Depends(get_db)):
 
     password = f"00{usuario}"
     hashed_password = get_password_hash(password)
-
     nuevo = Student(
         nombre=alumno.nombre,
         apellido=alumno.apellido,
@@ -221,12 +239,8 @@ def crear_alumno(alumno: AlumnoCreate, db: Session = Depends(get_db)):
     return nuevo
 
 @app.get("/alumnos", response_model=List[AlumnoOut])
-def listar_alumnos(db: Session = Depends(get_db)):
+def listar_alumnos(db: Session = Depends(get_db), user: dict = Depends(allow_roles("admin", "profesor"))):
     return db.query(Student).all()
-
-@app.get("/alumnos/grupo/{grupo_nombre}", response_model=List[AlumnoOut])
-def obtener_alumnos_por_grupo(grupo_nombre: str, db: Session = Depends(get_db)):
-    return db.query(Student).filter(Student.grupo == grupo_nombre).all()
 
 @app.put("/alumnos/{alumno_id}")
 def actualizar_contraseña_alumno(alumno_id: int, datos: AlumnoPasswordUpdate, db: Session = Depends(get_db)):
@@ -238,76 +252,7 @@ def actualizar_contraseña_alumno(alumno_id: int, datos: AlumnoPasswordUpdate, d
     db.commit()
     return {"message": "Contraseña actualizada"}
 
-@app.delete("/eliminar-todo")
-def eliminar_todo(db: Session = Depends(get_db)):
-    db.query(Student).delete()
-    db.query(Group).delete()
-    db.commit()
-    return {"message": "Todos los alumnos y grupos han sido eliminados"}
-
-# ---------- FORO POR GRUPO ----------
-@app.post("/foro", response_model=PublicacionOut)
-def crear_publicacion(pub: PublicacionCreate, db: Session = Depends(get_db)):
-    nueva = Publicacion(**pub.dict())
-    db.add(nueva)
-    db.commit()
-    db.refresh(nueva)
-    return nueva
-
-@app.get("/foro/{grupo}", response_model=List[PublicacionOut])
-def publicaciones_por_grupo(grupo: str, db: Session = Depends(get_db)):
-    return db.query(Publicacion).filter(Publicacion.grupo == grupo).order_by(Publicacion.fecha.desc()).all()
-
-@app.put("/foro/{id}", response_model=PublicacionOut)
-def actualizar_publicacion(id: int, datos: dict, db: Session = Depends(get_db)):
-    pub = db.query(Publicacion).filter(Publicacion.id == id).first()
-    if not pub:
-        raise HTTPException(status_code=404, detail="Publicación no encontrada")
-    for key, value in datos.items():
-        setattr(pub, key, value)
-    db.commit()
-    db.refresh(pub)
-    return pub
-
-@app.delete("/foro/{id}")
-def eliminar_publicacion(id: int, db: Session = Depends(get_db)):
-    pub = db.query(Publicacion).filter(Publicacion.id == id).first()
-    if not pub:
-        raise HTTPException(status_code=404, detail="Publicación no encontrada")
-    db.delete(pub)
-    db.commit()
-    return {"message": "Publicación eliminada"}
-
-# ---------- FORO GLOBAL ----------
-@app.post("/foro-global", response_model=PublicacionGlobalOut)
-def crear_publicacion_global(pub: PublicacionGlobalCreate, db: Session = Depends(get_db)):
-    nueva = PublicacionGlobal(**pub.dict())
-    db.add(nueva)
-    db.commit()
-    db.refresh(nueva)
-    return nueva
-
-@app.get("/foro-global", response_model=List[PublicacionGlobalOut])
-def obtener_publicaciones_globales(db: Session = Depends(get_db)):
-    return db.query(PublicacionGlobal).order_by(PublicacionGlobal.fecha.desc()).all()
-
-@app.post("/foro-global/comentario", response_model=ComentarioOut)
-def agregar_comentario(c: ComentarioCreate, db: Session = Depends(get_db)):
-    comentario = Comentario(**c.dict())
-    db.add(comentario)
-    db.commit()
-    db.refresh(comentario)
-    return comentario
-
-@app.post("/foro-global/reaccion", response_model=ReaccionOut)
-def agregar_reaccion(r: ReaccionCreate, db: Session = Depends(get_db)):
-    reaccion = Reaccion(**r.dict())
-    db.add(reaccion)
-    db.commit()
-    db.refresh(reaccion)
-    return reaccion
-
-# ---------- INFO DE USUARIO PARA IDENTIFICACIÓN EN COMENTARIOS ----------
+# === INFO USUARIO ===
 @app.get("/usuario-info/{usuario}")
 def obtener_info_usuario(usuario: str, db: Session = Depends(get_db)):
     profe = db.query(Teacher).filter(Teacher.usuario == usuario).first()
@@ -334,3 +279,12 @@ def obtener_info_usuario(usuario: str, db: Session = Depends(get_db)):
         }
 
     raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+# === RUTA PROTEGIDA JWT ===
+@app.get("/protegido")
+def ruta_segura(user_data: dict = Depends(get_current_user)):
+    return {
+        "mensaje": "Bienvenido al área protegida",
+        "usuario": user_data["sub"],
+        "rol": user_data["rol"]
+    }

@@ -13,6 +13,8 @@ export default function ProfesoresAdmin({ isModal = false }) {
   });
   const [credencialesGeneradas, setCredencialesGeneradas] = useState(null);
 
+  const token = localStorage.getItem("token");
+
   useEffect(() => {
     fetch("http://localhost:8000/materias")
       .then((res) => res.json())
@@ -56,7 +58,10 @@ export default function ProfesoresAdmin({ isModal = false }) {
     try {
       const response = await fetch("http://localhost:8000/profesores", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`, // ✅ Token JWT incluido
+        },
         body: JSON.stringify(profesorParaGuardar),
       });
 
@@ -127,7 +132,9 @@ export default function ProfesoresAdmin({ isModal = false }) {
           >
             <option value="">-- Selecciona una materia --</option>
             {materias.map((m, i) => (
-              <option key={i} value={m.nombre}>{m.nombre}</option>
+              <option key={i} value={m.nombre}>
+                {m.nombre}
+              </option>
             ))}
           </select>
 
@@ -142,8 +149,12 @@ export default function ProfesoresAdmin({ isModal = false }) {
 
       {credencialesGeneradas && (
         <div className="bg-green-100 text-green-800 border border-green-300 rounded p-4 mb-6">
-          <p><strong>Usuario generado:</strong> {credencialesGeneradas.usuario}</p>
-          <p><strong>Contraseña por defecto:</strong> {credencialesGeneradas.contraseña}</p>
+          <p>
+            <strong>Usuario generado:</strong> {credencialesGeneradas.usuario}
+          </p>
+          <p>
+            <strong>Contraseña por defecto:</strong> {credencialesGeneradas.contraseña}
+          </p>
         </div>
       )}
 

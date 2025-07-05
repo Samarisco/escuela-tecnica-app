@@ -8,6 +8,8 @@ export default function Grupos() {
   const [alumnosPorGrupo, setAlumnosPorGrupo] = useState({});
   const [grupoSeleccionado, setGrupoSeleccionado] = useState(null);
 
+  const token = localStorage.getItem("token");
+
   useEffect(() => {
     const usuario = localStorage.getItem("usuario");
 

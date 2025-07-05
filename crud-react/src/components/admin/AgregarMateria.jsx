@@ -6,11 +6,17 @@ export default function AgregarMateria({ isModal = false }) {
   const [nuevaMateria, setNuevaMateria] = useState("");
   const [error, setError] = useState("");
 
+  const token = localStorage.getItem("token");
+
   // --- Cargar materias al iniciar ---
   useEffect(() => {
     const fetchMaterias = async () => {
       try {
-        const response = await fetch("http://localhost:8000/materias");
+        const response = await fetch("http://localhost:8000/materias", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
         if (!response.ok) throw new Error("Error al obtener materias");
 
         const data = await response.json();
@@ -21,7 +27,7 @@ export default function AgregarMateria({ isModal = false }) {
     };
 
     fetchMaterias();
-  }, []);
+  }, [token]);
 
   // --- Agregar nueva materia ---
   const agregarMateria = async () => {
@@ -42,7 +48,10 @@ export default function AgregarMateria({ isModal = false }) {
     try {
       const response = await fetch("http://localhost:8000/materias", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`  // ✅ encabezado de autenticación
+        },
         body: JSON.stringify({ nombre }),
       });
 

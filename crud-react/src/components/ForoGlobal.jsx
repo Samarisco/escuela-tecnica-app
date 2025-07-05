@@ -22,6 +22,7 @@ export default function ForoGlobal() {
 
   const usuario = localStorage.getItem("usuario");
   const rol = localStorage.getItem("role");
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetch("http://localhost:8000/foro-global")

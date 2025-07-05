@@ -13,12 +13,28 @@ const GestionarAlumnos = () => {
   const [gradoActivo, setGradoActivo] = useState(null);
   const [seccionesAbiertas, setSeccionesAbiertas] = useState({});
 
+  const token = localStorage.getItem("token");
+
   useEffect(() => {
-    fetch("http://localhost:8000/alumnos")
-      .then((res) => res.json())
-      .then(setAlumnos)
-      .catch(() => setAlumnos([]));
-  }, []);
+    const obtenerAlumnos = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/alumnos", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) throw new Error("Error al obtener alumnos");
+        const data = await res.json();
+        console.log("📚 Alumnos cargados:", data); // 👈 para verificar grupo real
+        setAlumnos(data);
+      } catch (err) {
+        console.error("Error:", err.message);
+        setAlumnos([]);
+      }
+    };
+
+    obtenerAlumnos();
+  }, [token]);
 
   const toggleSeccion = (clave) => {
     setSeccionesAbiertas((prev) => ({ ...prev, [clave]: !prev[clave] }));
@@ -33,15 +49,17 @@ const GestionarAlumnos = () => {
     try {
       const res = await fetch(`http://localhost:8000/alumnos/${formPass.alumno.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: formPass.nuevaPass })
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ password: formPass.nuevaPass }),
       });
 
       if (!res.ok) throw new Error();
       setMensaje(`✅ Contraseña actualizada para ${formPass.alumno.nombre}`);
       setFormPass({ open: false, alumno: null, nuevaPass: "" });
 
-      // Limpiar mensaje después de 3s
       setTimeout(() => setMensaje(""), 3000);
     } catch {
       setMensaje("❌ Error al actualizar contraseña");
@@ -50,13 +68,12 @@ const GestionarAlumnos = () => {
   };
 
   const normalizar = (str) =>
-  str?.toString().trim().toLowerCase().replace(/[\s°\-]+/g, "");
+    str?.toString().trim().toLowerCase().replace(/[\s°\-\_]+/g, "");
 
   const obtenerAlumnosPorGrupo = (grado, letra, turno) => {
-  const nombreGrupo = `${grado}°${letra} - ${turno}`;
-  return alumnos.filter((a) => normalizar(a.grupo) === normalizar(nombreGrupo));
+    const nombreGrupo = `${grado}°${letra} - ${turno}`;
+    return alumnos.filter((a) => normalizar(a.grupo) === normalizar(nombreGrupo));
   };
-
 
   const renderGrupo = (grado, letra, turno) => {
     const nombreGrupo = `${grado}°${letra} - ${turno}`;

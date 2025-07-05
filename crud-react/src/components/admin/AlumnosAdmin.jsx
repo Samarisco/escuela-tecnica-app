@@ -1,6 +1,3 @@
-// === FRONTEND: Formulario para agregar alumno ===
-
-// src/components/admin/AlumnosAdmin.jsx
 import { useState, useEffect } from "react";
 
 const AlumnosAdmin = () => {
@@ -10,34 +7,54 @@ const AlumnosAdmin = () => {
   const [gruposDisponibles, setGruposDisponibles] = useState([]);
   const [mensaje, setMensaje] = useState("");
 
+  const token = localStorage.getItem("token");
+
   useEffect(() => {
-    fetch("http://localhost:8000/grupos")
-      .then((res) => res.json())
-      .then((data) => setGruposDisponibles(data))
-      .catch(() => setGruposDisponibles([]));
-  }, []);
+    const fetchGrupos = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/grupos", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) throw new Error("Error al obtener grupos");
+
+        const data = await res.json();
+        setGruposDisponibles(data);
+      } catch (error) {
+        console.error("Error al obtener grupos:", error);
+        setGruposDisponibles([]);
+      }
+    };
+
+    fetchGrupos();
+  }, [token]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const res = await fetch("http://localhost:8000/alumnos", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ nombre, apellido, grupo }),
       });
 
       if (res.ok) {
         const data = await res.json();
-        setMensaje(`Alumno agregado con usuario: ${data.usuario}`);
+        setMensaje(`✅ Alumno agregado con usuario: ${data.usuario}`);
         setNombre("");
         setApellido("");
         setGrupo("");
       } else {
         const error = await res.json();
-        setMensaje(error.detail || "Error al agregar alumno");
+        setMensaje(`❌ ${error.detail || "Error al agregar alumno"}`);
       }
     } catch (err) {
-      setMensaje("Error al conectar con el servidor");
+      console.error(err);
+      setMensaje("❌ Error al conectar con el servidor");
     }
   };
 
@@ -71,10 +88,7 @@ const AlumnosAdmin = () => {
             Selecciona un grupo
           </option>
           {gruposDisponibles.map((g) => (
-            <option
-              key={g.id}
-              value={`${g.grado}°${g.letra} - ${g.turno}`}
-            >
+            <option key={g.id} value={`${g.grado}°${g.letra} - ${g.turno}`}>
               {`${g.grado}°${g.letra} - ${g.turno}`}
             </option>
           ))}
@@ -86,7 +100,16 @@ const AlumnosAdmin = () => {
           Agregar Alumno
         </button>
       </form>
-      {mensaje && <p className="mt-4 text-green-600 font-semibold">{mensaje}</p>}
+
+      {mensaje && (
+        <p
+          className={`mt-4 font-semibold ${
+            mensaje.startsWith("✅") ? "text-green-600" : "text-red-600"
+          }`}
+        >
+          {mensaje}
+        </p>
+      )}
     </div>
   );
 };

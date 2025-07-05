@@ -1,23 +1,20 @@
 from pydantic import BaseModel
 from typing import List, Optional
-from datetime import date   , datetime
+from datetime import datetime
 
-# --- Admin ---
+# ---------- ADMIN ----------
 class AdminCreate(BaseModel):
     employee_number: str
     password: str
 
-# --- Login ---
-class LoginRequest(BaseModel):
-    employee_number: str
-    password: str
-
+# ---------- LOGIN ----------
 class LoginResponse(BaseModel):
     role: str
     usuario: str
+    access_token: str
 
 
-# --- Materias ---
+# ---------- MATERIAS ----------
 class MateriaCreate(BaseModel):
     nombre: str
 
@@ -28,7 +25,7 @@ class MateriaOut(BaseModel):
     class Config:
         from_attributes = True
 
-# --- Grupos ---
+# ---------- GRUPOS ----------
 class GrupoCreate(BaseModel):
     grado: str
     turno: str
@@ -43,7 +40,7 @@ class GrupoOut(BaseModel):
     class Config:
         from_attributes = True
 
-# --- Profesores ---
+# ---------- PROFESORES ----------
 class ProfesorCreate(BaseModel):
     nombre: str
     apellido: str
@@ -65,7 +62,15 @@ class ProfesorOut(BaseModel):
     class Config:
         from_attributes = True
 
-# --- Alumnos ---
+class ProfesorPasswordUpdate(BaseModel):
+    password: str
+
+class ProfesorUpdate(BaseModel):
+    materia: Optional[str] = None
+    grupos: Optional[List[str]] = None
+    password: Optional[str] = None
+
+# ---------- ALUMNOS ----------
 class AlumnoCreate(BaseModel):
     nombre: str
     apellido: str
@@ -81,7 +86,10 @@ class AlumnoOut(BaseModel):
     class Config:
         from_attributes = True
 
-# --- Publicaciones ---
+class AlumnoPasswordUpdate(BaseModel):
+    password: str
+
+# ---------- PUBLICACIONES ----------
 class PublicacionCreate(BaseModel):
     grupo: str
     materia: str
@@ -101,16 +109,11 @@ class PublicacionOut(BaseModel):
     class Config:
         from_attributes = True
 
-
+# ---------- COMENTARIOS Y REACCIONES ----------
 class ComentarioCreate(BaseModel):
     publicacion_id: int
     autor: str
     contenido: str
-
-class ReaccionCreate(BaseModel):
-    publicacion_id: int
-    tipo: str
-    autor: str
 
 class ComentarioOut(BaseModel):
     id: int
@@ -121,6 +124,11 @@ class ComentarioOut(BaseModel):
     class Config:
         orm_mode = True
 
+class ReaccionCreate(BaseModel):
+    publicacion_id: int
+    tipo: str
+    autor: str
+
 class ReaccionOut(BaseModel):
     id: int
     tipo: str
@@ -129,6 +137,7 @@ class ReaccionOut(BaseModel):
     class Config:
         orm_mode = True
 
+# ---------- PUBLICACIÓN GLOBAL ----------
 class PublicacionGlobalCreate(BaseModel):
     autor: str
     titulo: str
@@ -149,6 +158,3 @@ class PublicacionGlobalOut(BaseModel):
 
     class Config:
         orm_mode = True
-
-class AlumnoPasswordUpdate(BaseModel):
-    password: str

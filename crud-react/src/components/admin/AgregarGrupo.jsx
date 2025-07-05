@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { RiAddLine } from "react-icons/ri";
 
 export default function AgregarGrupo({ isModal = false }) {
@@ -13,11 +13,17 @@ export default function AgregarGrupo({ isModal = false }) {
   const letrasVespertino = ["G", "H", "I", "J", "K", "L"];
   const turnos = ["Matutino", "Vespertino"];
 
+  // ✅ Obtener token guardado
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    // Opcional: precargar los grupos existentes desde el backend si quieres
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     let updatedGrupo = { ...nuevoGrupo, [name]: value };
 
-    // Cambiar automáticamente la letra según el turno
     if (name === "turno") {
       updatedGrupo.letra =
         value === "Matutino" ? letrasMatutino[0] : letrasVespertino[0];
@@ -30,8 +36,7 @@ export default function AgregarGrupo({ isModal = false }) {
     const letrasDisponibles =
       nuevoGrupo.turno === "Matutino" ? letrasMatutino : letrasVespertino;
 
-    const letraValida = letrasDisponibles.includes(nuevoGrupo.letra);
-    if (!letraValida) {
+    if (!letrasDisponibles.includes(nuevoGrupo.letra)) {
       return alert("La letra seleccionada no corresponde al turno elegido.");
     }
 
@@ -42,17 +47,24 @@ export default function AgregarGrupo({ isModal = false }) {
     try {
       const response = await fetch("http://localhost:8000/grupos", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // ✅ JWT obligatorio
+        },
         body: JSON.stringify(nuevoGrupo),
       });
 
-      if (!response.ok) throw new Error("Error al guardar");
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || "Error al guardar grupo");
+      }
 
       const data = await response.json();
       setGrupos([...grupos, { ...data, id }]);
       setNuevoGrupo({ grado: "1", turno: "Matutino", letra: "A" });
     } catch (error) {
-      console.error("Error al guardar grupo:", error);
+      console.error("Error al guardar grupo:", error.message);
+      alert(error.message || "Ocurrió un error inesperado");
     }
   };
 
@@ -66,6 +78,7 @@ export default function AgregarGrupo({ isModal = false }) {
       )}
 
       <div className="grid gap-4 md:grid-cols-3 mb-6">
+        {/* Grado */}
         <div>
           <label className="block text-sm mb-1 font-medium text-gray-700">
             Grado
@@ -84,6 +97,7 @@ export default function AgregarGrupo({ isModal = false }) {
           </select>
         </div>
 
+        {/* Turno */}
         <div>
           <label className="block text-sm mb-1 font-medium text-gray-700">
             Turno
@@ -102,6 +116,7 @@ export default function AgregarGrupo({ isModal = false }) {
           </select>
         </div>
 
+        {/* Letra */}
         <div>
           <label className="block text-sm mb-1 font-medium text-gray-700">
             Letra
@@ -120,14 +135,16 @@ export default function AgregarGrupo({ isModal = false }) {
           </select>
         </div>
 
+        {/* Botón agregar */}
         <button
           onClick={agregarGrupo}
-          className="col-span-full bg-[#4b1e25] text-white py-2 rounded hover:bg-[#652837] transition flex items-center gap-2"
+          className="col-span-full bg-[#4b1e25] text-white py-2 rounded hover:bg-[#652837] transition flex items-center justify-center gap-2"
         >
           <RiAddLine /> Agregar grupo
         </button>
       </div>
 
+      {/* Vista previa si no es modal */}
       {!isModal && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {grupos.map((grupo, i) => (
