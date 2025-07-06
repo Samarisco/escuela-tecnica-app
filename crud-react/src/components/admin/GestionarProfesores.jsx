@@ -17,13 +17,13 @@ export default function GestionarProfesores() {
     const fetchData = async () => {
       try {
         const [profesoresRes, materiasRes, gruposRes] = await Promise.all([
-          fetch("http://localhost:8000/profesores", {
+          fetch(`${import.meta.env.VITE_API_URL}/profesores`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch("http://localhost:8000/materias", {
+          fetch(`${import.meta.env.VITE_API_URL}/materias`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch("http://localhost:8000/grupos", {
+          fetch(`${import.meta.env.VITE_API_URL}/grupos`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -66,7 +66,7 @@ export default function GestionarProfesores() {
 
   const guardarCambios = async () => {
     try {
-      const res = await fetch(`http://localhost:8000/profesores/${profesorSeleccionado.id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/profesores/${profesorSeleccionado.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -91,7 +91,7 @@ export default function GestionarProfesores() {
 
   const guardarPassword = async () => {
     try {
-      const res = await fetch(`http://localhost:8000/profesores/${profesorSeleccionado.id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/profesores/${profesorSeleccionado.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

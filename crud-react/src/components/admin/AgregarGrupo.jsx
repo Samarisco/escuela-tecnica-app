@@ -45,7 +45,7 @@ export default function AgregarGrupo({ isModal = false }) {
     if (duplicado) return alert("Ese grupo ya existe.");
 
     try {
-      const response = await fetch("http://localhost:8000/grupos", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/grupos`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

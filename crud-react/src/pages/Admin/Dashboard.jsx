@@ -18,13 +18,13 @@ const AdminDashboard = () => {
     const cargarDatos = async () => {
       try {
         const [resProf, resAlu, resMat] = await Promise.all([
-          fetch("http://localhost:8000/profesores", {
+          fetch(`${import.meta.env.VITE_API_URL}/profesores`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch("http://localhost:8000/alumnos", {
+          fetch(`${import.meta.env.VITE_API_URL}/alumnos`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch("http://localhost:8000/materias", {
+          fetch(`${import.meta.env.VITE_API_URL}/materias`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);

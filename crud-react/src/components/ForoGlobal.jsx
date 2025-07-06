@@ -31,7 +31,7 @@ export default function ForoGlobal() {
   useEffect(() => {
     if (!token) return;
 
-    fetch("http://localhost:8000/foro-global", {
+    fetch(`${import.meta.env.VITE_API_URL}/foro-global`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -45,7 +45,7 @@ export default function ForoGlobal() {
         const infoAutores = {};
         for (const autor of autoresUnicos) {
           try {
-            const res = await fetch(`http://localhost:8000/usuario-info/${autor}`, {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/usuario-info/${autor}`, {
               headers: { Authorization: `Bearer ${token}` },
             });
             const datos = await res.json();
@@ -82,7 +82,7 @@ export default function ForoGlobal() {
     if (imagen) {
       const formData = new FormData();
       formData.append("file", imagen);
-      const res = await fetch("http://localhost:8000/subir-archivo", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/subir-archivo`, {
         method: "POST",
         body: formData,
       });
@@ -93,7 +93,7 @@ export default function ForoGlobal() {
     if (archivo) {
       const formData = new FormData();
       formData.append("file", archivo);
-      const res = await fetch("http://localhost:8000/subir-archivo", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/subir-archivo`, {
         method: "POST",
         body: formData,
       });
@@ -110,8 +110,8 @@ export default function ForoGlobal() {
     };
 
     const endpoint = modoEdicion
-      ? `http://localhost:8000/foro-global/${modoEdicion}`
-      : "http://localhost:8000/foro-global";
+      ? `${import.meta.env.VITE_API_URL}/foro-global/${modoEdicion}`
+      : `${import.meta.env.VITE_API_URL}/foro-global`;
     const method = modoEdicion ? "PUT" : "POST";
 
     try {
@@ -126,7 +126,7 @@ export default function ForoGlobal() {
 
       if (res.ok) {
         const nuevaPub = await res.json();
-        const autorInfoRes = await fetch(`http://localhost:8000/usuario-info/${usuario}`, {
+        const autorInfoRes = await fetch(`${import.meta.env.VITE_API_URL}/usuario-info/${usuario}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const autorInfo = await autorInfoRes.json();
@@ -175,7 +175,7 @@ export default function ForoGlobal() {
   const eliminarPublicacion = async (id) => {
     if (!window.confirm("¿Eliminar publicación?")) return;
     try {
-      const res = await fetch(`http://localhost:8000/foro-global/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/foro-global/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -200,7 +200,7 @@ export default function ForoGlobal() {
     };
 
     try {
-      const res = await fetch("http://localhost:8000/foro-global/comentario", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/foro-global/comentario`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -211,7 +211,7 @@ export default function ForoGlobal() {
 
       if (res.ok) {
         const nuevo = await res.json();
-        const autorInfoRes = await fetch(`http://localhost:8000/usuario-info/${usuario}`, {
+        const autorInfoRes = await fetch(`${import.meta.env.VITE_API_URL}/usuario-info/${usuario}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const autorInfo = await autorInfoRes.json();
@@ -326,7 +326,7 @@ export default function ForoGlobal() {
               {pub.imagen_url && (
                 <div className="mt-3">
                   <img
-                    src={`http://localhost:8000/${pub.imagen_url}`}
+                    src={`${import.meta.env.VITE_API_URL}/${pub.imagen_url}`}
                     alt="Contenido"
                     className="w-full h-auto max-h-[500px] object-contain rounded"
                   />
@@ -335,7 +335,7 @@ export default function ForoGlobal() {
 
               {pub.archivo_url && (
                 <a
-                  href={`http://localhost:8000/${pub.archivo_url}`}
+                  href={`${import.meta.env.VITE_API_URL}/${pub.archivo_url}`}
                   target="_blank"
                   rel="noreferrer"
                   className="text-yellow-600 text-sm font-medium hover:underline mt-2 inline-block"

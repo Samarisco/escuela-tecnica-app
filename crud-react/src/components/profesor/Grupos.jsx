@@ -25,7 +25,7 @@ export default function Grupos() {
 
     const fetchGrupos = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/profesores/${usuario}/grupos`, { headers });
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/profesores/${usuario}/grupos`, { headers });
 
         if (!res.ok) {
           const errorData = await res.json();
@@ -63,7 +63,7 @@ export default function Grupos() {
 
     if (!alumnosPorGrupo[claveGrupo]) {
       try {
-        const res = await fetch("http://localhost:8000/alumnos", { headers });
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/alumnos`, { headers });
 
         if (!res.ok) throw new Error("Error al obtener alumnos");
 

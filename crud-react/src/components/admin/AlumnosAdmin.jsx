@@ -12,7 +12,7 @@ const AlumnosAdmin = () => {
   useEffect(() => {
     const fetchGrupos = async () => {
       try {
-        const res = await fetch("http://localhost:8000/grupos", {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/grupos`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -33,7 +33,7 @@ const AlumnosAdmin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:8000/alumnos", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/alumnos`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

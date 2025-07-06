@@ -12,7 +12,7 @@ export default function AgregarMateria({ isModal = false }) {
   useEffect(() => {
     const fetchMaterias = async () => {
       try {
-        const response = await fetch("http://localhost:8000/materias", {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/materias`, {
           headers: {
             "Authorization": `Bearer ${token}`
           }
@@ -46,7 +46,7 @@ export default function AgregarMateria({ isModal = false }) {
     }
 
     try {
-      const response = await fetch("http://localhost:8000/materias", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/materias`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

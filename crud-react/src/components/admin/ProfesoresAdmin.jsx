@@ -16,7 +16,7 @@ export default function ProfesoresAdmin({ isModal = false }) {
   const token = localStorage.getItem("token");
 
   useEffect(() => {
-    fetch("http://localhost:8000/materias")
+    fetch(`${import.meta.env.VITE_API_URL}/materias`)
       .then((res) => res.json())
       .then((data) => setMaterias(data))
       .catch((err) => console.error("Error cargando materias:", err));
@@ -56,7 +56,7 @@ export default function ProfesoresAdmin({ isModal = false }) {
     };
 
     try {
-      const response = await fetch("http://localhost:8000/profesores", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/profesores`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

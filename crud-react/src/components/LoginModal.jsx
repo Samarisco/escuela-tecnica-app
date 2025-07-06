@@ -27,7 +27,7 @@ const LoginModal = ({ isOpen, onClose }) => {
 
       // 🔍 Obtener información adicional si es alumno
       if (result.role === "alumno") {
-        const res = await fetch(`http://localhost:8000/usuario-info/${employeeNumber}`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/usuario-info/${employeeNumber}`, {
           headers: {
             Authorization: `Bearer ${result.access_token}`,
           },

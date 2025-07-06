@@ -3,7 +3,7 @@ export async function login(employeeNumber, password) {
   formData.append("username", employeeNumber);
   formData.append("password", password);
 
-  const res = await fetch("http://localhost:8000/login", {
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -16,5 +16,5 @@ export async function login(employeeNumber, password) {
     throw new Error(errorData.detail || "Error al iniciar sesión");
   }
 
-  return await res.json(); // Espera { access_token, token_type, role, usuario }
+  return await res.json();
 }

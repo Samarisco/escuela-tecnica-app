@@ -140,7 +140,7 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
-El backend correrá en [http://localhost:8000](http://localhost:8000)
+El backend correrá en [${import.meta.env.VITE_API_URL}](${import.meta.env.VITE_API_URL})
 
 ---
 

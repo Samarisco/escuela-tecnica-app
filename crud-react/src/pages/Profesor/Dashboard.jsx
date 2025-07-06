@@ -17,7 +17,7 @@ export default function ProfesorDashboard() {
   useEffect(() => {
     const fetchGrupos = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/profesores/${usuario}/grupos`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/profesores/${usuario}/grupos`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

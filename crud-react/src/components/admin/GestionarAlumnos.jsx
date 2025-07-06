@@ -18,7 +18,7 @@ const GestionarAlumnos = () => {
   useEffect(() => {
     const obtenerAlumnos = async () => {
       try {
-        const res = await fetch("http://localhost:8000/alumnos", {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/alumnos`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Error al obtener alumnos");
@@ -44,7 +44,7 @@ const GestionarAlumnos = () => {
     }
 
     try {
-      const res = await fetch(`http://localhost:8000/alumnos/${formPass.alumno.id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/alumnos/${formPass.alumno.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

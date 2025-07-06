@@ -63,7 +63,7 @@ const DashboardLayout = () => {
   useEffect(() => {
     const obtenerNombre = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/usuario-info/${usuario}`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/usuario-info/${usuario}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
